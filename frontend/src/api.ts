@@ -12,7 +12,6 @@ api.interceptors.request.use((cfg) => {
 api.interceptors.response.use(
   (r) => r,
   (e) => {
-    // протермінований/невалідний токен — виходимо з акаунта
     if (e.response?.status === 401 && useAuth.getState().token) useAuth.getState().logout();
     return Promise.reject(e);
   },

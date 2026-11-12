@@ -15,7 +15,7 @@ type AuthUser = { id: number; name: string; email: string; role: string };
 export class CreateBookDto {
   @IsString() @IsNotEmpty() name: string;
   @IsString() @IsNotEmpty() author: string;
-  @IsOptional() @IsString() photo?: string; // зовнішній URL (якщо файл не завантажено)
+  @IsOptional() @IsString() photo?: string; 
 }
 
 export const upload = FileInterceptor('file', {

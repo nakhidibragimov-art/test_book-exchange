@@ -85,7 +85,7 @@ export class AuthService {
         where: { id: user.id },
         data: {
           resetTokenHash: createHash('sha256').update(token).digest('hex'),
-          resetTokenExpires: new Date(Date.now() + 60 * 60 * 1000), // 1 година
+          resetTokenExpires: new Date(Date.now() + 60 * 60 * 1000), 
         },
       });
       const link = `${process.env.CLIENT_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
@@ -95,7 +95,7 @@ export class AuthService {
           'Відновлення пароля',
           `Вітаємо, ${user.name}!\n\nЩоб задати новий пароль, перейдіть за посиланням (діє 1 годину):\n${link}\n\nЯкщо ви не просили відновлення, просто проігноруйте цей лист.`,
         );
-      } catch { /* відповідь однакова, щоб не розкривати, чи існує акаунт; помилку вже залоговано */ }
+      } catch {}
     }
     return { ok: true };
   }

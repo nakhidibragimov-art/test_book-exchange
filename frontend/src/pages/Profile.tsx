@@ -22,7 +22,7 @@ export default function Profile() {
     api.get<Info>('/profile').then((r) => { setInfo(r.data); reset({ name: r.data.name, email: r.data.email }); });
     api.get<Req[]>('/profile/requests').then((r) => {
       setReqs(r.data);
-      if (r.data.some((x) => !x.read)) api.post('/profile/requests/read'); // позначаємо прочитаними після показу
+      if (r.data.some((x) => !x.read)) api.post('/profile/requests/read'); 
     });
   }, [reset]);
 

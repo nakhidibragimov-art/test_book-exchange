@@ -25,7 +25,6 @@ export class ProfileController {
     return { ...publicUser(user!), booksCount };
   }
 
-  // multipart: name, email та необов'язковий файл аватара у полі "file"
   @Patch()
   @UseInterceptors(upload)
   async update(
