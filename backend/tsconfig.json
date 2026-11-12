@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "module": "commonjs", "target": "ES2021", "outDir": "./dist", "baseUrl": "./",
+    "declaration": false, "removeComments": true, "emitDecoratorMetadata": true,
+    "experimentalDecorators": true, "esModuleInterop": true, "strictNullChecks": true,
+    "skipLibCheck": true, "incremental": true
+  },
+  "include": ["src", "prisma"]
+}
