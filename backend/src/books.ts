@@ -3,9 +3,9 @@ import {
   NotFoundException, Param, ParseIntPipe, Post, Query, UploadedFile, UseGuards, UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
 import { CurrentUser, JwtAuthGuard } from './auth';
 import { MailService } from './mail.service';
 import { PrismaService } from './prisma.service';
@@ -18,16 +18,23 @@ export class CreateBookDto {
   @IsOptional() @IsString() photo?: string; 
 }
 
+// Дозволені типи; розширення береться з mimetype, а не з імені файлу від клієнта
+const ALLOWED_IMAGES: Record<string, string> = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+};
+
 export const upload = FileInterceptor('file', {
   storage: diskStorage({
     destination: 'uploads',
     filename: (_req, file, cb) =>
-      cb(null, `${Date.now()}-${Math.round(Math.random() * 1e6)}${extname(file.originalname)}`),
+      cb(null, `${Date.now()}-${Math.round(Math.random() * 1e6)}${ALLOWED_IMAGES[file.mimetype]}`),
   }),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    const ok = file.mimetype.startsWith('image/');
-    cb(ok ? null : new BadRequestException('Дозволені лише зображення'), ok);
+    const ok = Object.prototype.hasOwnProperty.call(ALLOWED_IMAGES, file.mimetype);
+    cb(ok ? null : new BadRequestException('Дозволені лише зображення JPEG, PNG або WebP'), ok);
   },
 });
 
@@ -120,7 +127,9 @@ export class BooksController {
   @UseGuards(JwtAuthGuard) @Delete('books/:id')
   remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() u: AuthUser) { return this.books.remove(id, u); }
 
-  @UseGuards(JwtAuthGuard) @Post('books/:id/exchange')
+  // кожен запит надсилає лист → 5 запитів за 10 хвилин
+  @UseGuards(JwtAuthGuard, ThrottlerGuard) @Throttle({ default: { limit: 5, ttl: 600_000 } })
+  @Post('books/:id/exchange')
   exchange(@Param('id', ParseIntPipe) id: number, @CurrentUser() u: AuthUser) {
     return this.books.requestExchange(id, u);
   }

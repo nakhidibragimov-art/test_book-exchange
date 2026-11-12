@@ -5,6 +5,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { AuthGuard, PassportStrategy } from '@nestjs/passport';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { IsEmail, IsString, MinLength } from 'class-validator';
 import * as bcrypt from 'bcryptjs';
 import { ExtractJwt, Strategy } from 'passport-jwt';
@@ -137,7 +138,11 @@ export class AuthService {
 export class AuthController {
   constructor(private auth: AuthService) {}
   @Post('register') register(@Body() dto: RegisterDto) { return this.auth.register(dto); }
+  // 10 спроб входу на хвилину з однієї IP
+  @UseGuards(ThrottlerGuard) @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('login') login(@Body() dto: LoginDto) { return this.auth.login(dto); }
+  // лист відправляється на email → 3 запити за 10 хвилин
+  @UseGuards(ThrottlerGuard) @Throttle({ default: { limit: 3, ttl: 600_000 } })
   @Post('forgot-password') forgot(@Body() dto: ForgotDto) { return this.auth.forgot(dto.email); }
   @Post('reset-password') reset(@Body() dto: ResetDto) { return this.auth.reset(dto.token, dto.password); }
   @UseGuards(JwtAuthGuard) @Get('me') me(@CurrentUser() user: unknown) { return user; }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 import { api, Book, Paged, photoSrc } from '../api';
 
 export function Cover({ book, className = '' }: { book: Book; className?: string }) {
@@ -24,10 +25,14 @@ export default function Books() {
   }, [search]);
 
   useEffect(() => {
+    // скасовуємо попередній запит, щоб повільна стара відповідь не перезаписала нову
+    const controller = new AbortController();
     setLoading(true);
-    api.get<Paged<Book>>('/books', { params: { search: query, order, page, limit: 8 } })
+    api.get<Paged<Book>>('/books', { params: { search: query, order, page, limit: 8 }, signal: controller.signal })
       .then((r) => setData(r.data))
-      .finally(() => setLoading(false));
+      .catch((e) => { if (!axios.isCancel(e)) console.error(e); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
   }, [query, order, page]);
 
   return (
